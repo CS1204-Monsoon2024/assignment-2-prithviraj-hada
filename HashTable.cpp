@@ -1,11 +1,9 @@
 #include <iostream>
-#include <vector>
-#include <cmath>
 
 class HashTable {
 private:
-    std::vector<int> table;
-    std::vector<bool> occupied;
+    int* table;
+    bool* occupied;
     int size;
     int count;
     const double loadFactorThreshold = 0.8;
@@ -33,8 +31,13 @@ private:
 
     void resize() {
         int newSize = nextPrime(size * 2);
-        std::vector<int> newTable(newSize, -1);
-        std::vector<bool> newOccupied(newSize, false);
+        int* newTable = new int[newSize];
+        bool* newOccupied = new bool[newSize];
+
+        for (int i = 0; i < newSize; i++) {
+            newTable[i] = -1;
+            newOccupied[i] = false;
+        }
 
         std::cout << "Resizing table to new size: " << newSize << std::endl;
 
@@ -51,6 +54,9 @@ private:
             }
         }
 
+        delete[] table;
+        delete[] occupied;
+
         table = newTable;
         occupied = newOccupied;
         size = newSize;
@@ -59,10 +65,19 @@ private:
 public:
     HashTable(int initialSize) {
         size = nextPrime(initialSize);
-        table.resize(size, -1);
-        occupied.resize(size, false);
+        table = new int[size];
+        occupied = new bool[size];
+        for (int i = 0; i < size; i++) {
+            table[i] = -1;
+            occupied[i] = false;
+        }
         count = 0;
         std::cout << "Initialized hash table with size: " << size << std::endl;
+    }
+
+    ~HashTable() {
+        delete[] table;
+        delete[] occupied;
     }
 
     void insert(int key) {
