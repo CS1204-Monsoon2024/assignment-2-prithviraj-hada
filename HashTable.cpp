@@ -40,7 +40,6 @@ private:
             newOccupied[i] = false;
         }
 
-        std::cout << "Resizing table to new size: " << newSize << std::endl;
 
         for (int i = 0; i < size; i++) {
             if (occupied[i]) {
@@ -74,7 +73,6 @@ public:
             occupied[i] = false;
         }
         count = 0;
-        std::cout << "Initialized hash table with size: " << size << std::endl;
     }
 
     // Destructor
@@ -139,7 +137,7 @@ public:
         table[(hashValue + i * i) % size] = key;
         occupied[(hashValue + i * i) % size] = true;
         count++;
-        std::cout << "Inserted key " << key << " at index " << (hashValue + i * i) % size << std::endl;
+
     }
 
     bool search(int key) {
@@ -147,7 +145,7 @@ public:
         int i = 0;
         while (occupied[(hashValue + i * i) % size]) {
             if (table[(hashValue + i * i) % size] == key) {
-                std::cout << "Found key " << key << " at index " << (hashValue + i * i) % size << std::endl;
+                std::cout << "Found " << key << " at: " << (hashValue + i * i) % size << std::endl;
                 return true;
             }
             i++;
@@ -164,7 +162,6 @@ public:
                 table[(hashValue + i * i) % size] = -1;
                 occupied[(hashValue + i * i) % size] = false;
                 count--;
-                std::cout << "Removed key " << key << " from index " << (hashValue + i * i) % size << std::endl;
                 return;
             }
             i++;
@@ -173,7 +170,6 @@ public:
     }
 
     void printTable() {
-        std::cout << "Hash Table: ";
         for (int i = 0; i < size; i++) {
             if (occupied[i]) {
                 std::cout << table[i] << " ";
