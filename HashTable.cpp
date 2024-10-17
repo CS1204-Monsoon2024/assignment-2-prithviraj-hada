@@ -1,6 +1,5 @@
 #include <iostream>
-
-using namespace std;
+#include <utility> // for std::move
 
 class HashTable {
 private:
@@ -65,6 +64,7 @@ private:
     }
 
 public:
+    // Constructor
     HashTable(int initialSize) {
         size = nextPrime(initialSize);
         table = new int[size];
@@ -77,9 +77,53 @@ public:
         std::cout << "Initialized hash table with size: " << size << std::endl;
     }
 
+    // Destructor
     ~HashTable() {
         delete[] table;
         delete[] occupied;
+    }
+
+    // Copy constructor
+    HashTable(const HashTable& other)
+        : size(other.size), count(other.count), loadFactorThreshold(other.loadFactorThreshold) {
+        table = new int[size];
+        occupied = new bool[size];
+
+        for (int i = 0; i < size; i++) {
+            table[i] = other.table[i];
+            occupied[i] = other.occupied[i];
+        }
+    }
+
+    // Move constructor
+    HashTable(HashTable&& other) noexcept
+        : table(other.table), occupied(other.occupied), size(other.size), count(other.count) {
+        other.table = nullptr;
+        other.occupied = nullptr;
+        other.size = 0;
+        other.count = 0;
+    }
+
+    // Deleted copy assignment operator (prevents accidental assignment)
+    HashTable& operator=(const HashTable&) = delete;
+
+    // Move assignment operator
+    HashTable& operator=(HashTable&& other) noexcept {
+        if (this != &other) {
+            delete[] table;
+            delete[] occupied;
+
+            table = other.table;
+            occupied = other.occupied;
+            size = other.size;
+            count = other.count;
+
+            other.table = nullptr;
+            other.occupied = nullptr;
+            other.size = 0;
+            other.count = 0;
+        }
+        return *this;
     }
 
     void insert(int key) {
