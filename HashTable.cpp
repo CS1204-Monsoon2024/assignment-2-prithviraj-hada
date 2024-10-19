@@ -41,7 +41,7 @@ private:
         }
 
         for (int i = 0; i < size; i++) {
-            if (occupied[i]) {
+            if (occupied[i] && table[i] != -2) {
                 int key = table[i];
                 int hashValue = key % newSize;
                 int j = 0;
@@ -131,7 +131,7 @@ public:
 
         int hashValue = hash(key);
         int i = 0;
-        while (occupied[(hashValue + i * i) % size]) {
+        while (occupied[(hashValue + i * i) % size] && table[(hashValue + i * i) % size] != -2) {
             i++;
         }
         table[(hashValue + i * i) % size] = key;
@@ -156,14 +156,13 @@ public:
         int i = 0;
         while (occupied[(hashValue + i * i) % size]) {
             if (table[(hashValue + i * i) % size] == key) {
-                table[(hashValue + i * i) % size] = -1;
+                table[(hashValue + i * i) % size] = -2; // Mark as deleted
                 occupied[(hashValue + i * i) % size] = false;
                 count--;
                 return;
             }
             i++;
         }
-        std::cout << "Key " << key << " not found for removal" << std::endl;
     }
 
     void printTable() {
