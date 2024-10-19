@@ -7,7 +7,7 @@ private:
     bool* occupied;
     int size;
     int count;
-    const double loadFactorThreshold = 0.8;
+    const double loadFactorThreshold;
 
     int hash(int key) {
         return key % size;
@@ -40,7 +40,6 @@ private:
             newOccupied[i] = false;
         }
 
-
         for (int i = 0; i < size; i++) {
             if (occupied[i]) {
                 int key = table[i];
@@ -64,7 +63,8 @@ private:
 
 public:
     // Constructor
-    HashTable(int initialSize) {
+    HashTable(int initialSize)
+        : loadFactorThreshold(0.8) {
         size = nextPrime(initialSize);
         table = new int[size];
         occupied = new bool[size];
@@ -95,7 +95,7 @@ public:
 
     // Move constructor
     HashTable(HashTable&& other) noexcept
-        : table(other.table), occupied(other.occupied), size(other.size), count(other.count) {
+        : table(other.table), occupied(other.occupied), size(other.size), count(other.count), loadFactorThreshold(other.loadFactorThreshold) {
         other.table = nullptr;
         other.occupied = nullptr;
         other.size = 0;
@@ -137,7 +137,6 @@ public:
         table[(hashValue + i * i) % size] = key;
         occupied[(hashValue + i * i) % size] = true;
         count++;
-
     }
 
     bool search(int key) {
