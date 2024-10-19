@@ -139,7 +139,7 @@ public:
         count++;
     }
 
-    bool search(int key) {
+    int search(int key) {
         int hashValue = hash(key);
         int i = 0;
         while (occupied[(hashValue + i * i) % size]) {
