@@ -144,13 +144,11 @@ public:
         int i = 0;
         while (occupied[(hashValue + i * i) % size]) {
             if (table[(hashValue + i * i) % size] == key) {
-                std::cout << (hashValue + i * i) % size << std::endl;
-                return true;
+                return (hashValue + i * i) % size;
             }
             i++;
         }
-        std::cout << (-1) << std::endl;
-        return false;
+        return -1;
     }
 
     void remove(int key) {
