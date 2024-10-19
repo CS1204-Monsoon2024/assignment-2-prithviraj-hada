@@ -149,7 +149,7 @@ public:
             }
             i++;
         }
-        std::cout << "Key " << key << " not found" << std::endl;
+        std::cout << "Found at: " << (-1) << std::endl;
         return false;
     }
 
