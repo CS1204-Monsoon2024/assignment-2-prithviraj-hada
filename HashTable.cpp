@@ -1,121 +1,179 @@
 #include <iostream>
-#include <vector>
-#include <cmath>
-using namespace std;
+#include <utility> // for std::move
 
 class HashTable {
 private:
-    vector<int> hashTable;
-    int cap;
+    int* table;
+    bool* occupied;
     int size;
-    double loadFactor;
+    int count;
+    const double loadFactorThreshold;
 
-    int computeHash(int value) {
-        return value % cap;
+    int hash(int key) {
+        return key % size;
     }
 
-    int getNextPrime(int number) {
-        while (true) {
-            bool prime = true;
-            for (int i = 2; i * i <= number; i++) {
-                if (number % i == 0) {
-                    prime = false;
-                    break;
-                }
-            }
-            if (prime) return number;
-            number++;
+    bool isPrime(int n) {
+        if (n <= 1) return false;
+        if (n <= 3) return true;
+        if (n % 2 == 0 || n % 3 == 0) return false;
+        for (int i = 5; i * i <= n; i += 6) {
+            if (n % i == 0 || n % (i + 2) == 0) return false;
         }
+        return true;
     }
 
-    void rehash() {
-        int newcap = getNextPrime(cap * 2);
-        vector<int> tempTable(newcap, -1);
+    int nextPrime(int n) {
+        while (!isPrime(n)) {
+            n++;
+        }
+        return n;
+    }
 
-        for (int i = 0; i < cap; i++) {
-            if (hashTable[i] != -1 && hashTable[i] != -2) {
-                int value = hashTable[i];
-                int idx = value % newcap;
-                int probe = 0;
-                while (tempTable[(idx + probe * probe) % newcap] != -1) {
-                    probe++;
+    void resize() {
+        int newSize = nextPrime(size * 2);
+        int* newTable = new int[newSize];
+        bool* newOccupied = new bool[newSize];
+
+        for (int i = 0; i < newSize; i++) {
+            newTable[i] = -1;
+            newOccupied[i] = false;
+        }
+
+        for (int i = 0; i < size; i++) {
+            if (occupied[i]) {
+                int key = table[i];
+                int hashValue = key % newSize;
+                int j = 0;
+                while (newOccupied[(hashValue + j * j) % newSize]) {
+                    j++;
                 }
-                tempTable[(idx + probe * probe) % newcap] = value;
+                newTable[(hashValue + j * j) % newSize] = key;
+                newOccupied[(hashValue + j * j) % newSize] = true;
             }
         }
-        hashTable = tempTable;
-        cap = newcap;
+
+        delete[] table;
+        delete[] occupied;
+
+        table = newTable;
+        occupied = newOccupied;
+        size = newSize;
     }
 
 public:
-    HashTable(int initialcap = 5) {
-        cap = getNextPrime(initialcap);
-        hashTable = vector<int>(cap, -1);
-        size = 0;
-        loadFactor = 0.8;
+    // Constructor
+    HashTable(int initialSize)
+        : loadFactorThreshold(0.8) {
+        size = nextPrime(initialSize);
+        table = new int[size];
+        occupied = new bool[size];
+        for (int i = 0; i < size; i++) {
+            table[i] = -1;
+            occupied[i] = false;
+        }
+        count = 0;
     }
 
-    void insert(int value) {
-        if (size >= loadFactor * cap) {
-            rehash();
-        }
-        int idx = computeHash(value);
-        int probe = 0;
-
-        while (probe <= cap / 2 + 1) {
-            int idx2 = (idx + (probe * probe)) % cap;
-            if (hashTable[idx2] == value) {
-                cout << "Duplicate value insertion is not allowed" << endl;
-                return;
-            }
-            if (hashTable[idx2] == -1 || hashTable[idx2] == -2) {
-                hashTable[idx2] = value;
-                size++;
-                return;
-            }
-            probe++;
-        }
-        cout << "Max probing limit reached!" << endl;
+    // Destructor
+    ~HashTable() {
+        delete[] table;
+        delete[] occupied;
     }
 
-    void remove(int value) {
-        int idx = computeHash(value);
-        int probe = 0;
+    // Copy constructor
+    HashTable(const HashTable& other)
+        : size(other.size), count(other.count), loadFactorThreshold(other.loadFactorThreshold) {
+        table = new int[size];
+        occupied = new bool[size];
 
-        while (probe <= cap / 2 + 1) {
-            int idx2 = (idx + (probe * probe)) % cap;
-            if (hashTable[idx2] == value) {
-                hashTable[idx2] = -2; // Mark as deleted
-                size--;
-                return;
-            }
-            probe++;
+        for (int i = 0; i < size; i++) {
+            table[i] = other.table[i];
+            occupied[i] = other.occupied[i];
         }
-        cout << "Element not found" << endl;
     }
 
-    int search(int value) {
-        int idx = computeHash(value);
-        int probe = 0;
+    // Move constructor
+    HashTable(HashTable&& other) noexcept
+        : table(other.table), occupied(other.occupied), size(other.size), count(other.count), loadFactorThreshold(other.loadFactorThreshold) {
+        other.table = nullptr;
+        other.occupied = nullptr;
+        other.size = 0;
+        other.count = 0;
+    }
 
-        while (probe <= cap / 2 + 1) {
-            int idx2 = (idx + (probe * probe)) % cap;
-            if (hashTable[idx2] == value) {
-                return idx2;
+    // Deleted copy assignment operator (prevents accidental assignment)
+    HashTable& operator=(const HashTable&) = delete;
+
+    // Move assignment operator
+    HashTable& operator=(HashTable&& other) noexcept {
+        if (this != &other) {
+            delete[] table;
+            delete[] occupied;
+
+            table = other.table;
+            occupied = other.occupied;
+            size = other.size;
+            count = other.count;
+
+            other.table = nullptr;
+            other.occupied = nullptr;
+            other.size = 0;
+            other.count = 0;
+        }
+        return *this;
+    }
+
+    void insert(int key) {
+        if ((double)count / size >= loadFactorThreshold) {
+            resize();
+        }
+
+        int hashValue = hash(key);
+        int i = 0;
+        while (occupied[(hashValue + i * i) % size]) {
+            i++;
+        }
+        table[(hashValue + i * i) % size] = key;
+        occupied[(hashValue + i * i) % size] = true;
+        count++;
+    }
+
+    int search(int key) {
+        int hashValue = hash(key);
+        int i = 0;
+        while (occupied[(hashValue + i * i) % size]) {
+            if (table[(hashValue + i * i) % size] == key) {
+                return (hashValue + i * i) % size;
             }
-            probe++;
+            i++;
         }
         return -1;
     }
 
+    void remove(int key) {
+        int hashValue = hash(key);
+        int i = 0;
+        while (occupied[(hashValue + i * i) % size]) {
+            if (table[(hashValue + i * i) % size] == key) {
+                table[(hashValue + i * i) % size] = -1;
+                occupied[(hashValue + i * i) % size] = false;
+                count--;
+                return;
+            }
+            i++;
+        }
+        std::cout << "Key " << key << " not found for removal" << std::endl;
+    }
+
     void printTable() {
-        for (int i = 0; i < cap; i++) {
-            if (hashTable[i] == -1 || hashTable[i] == -2) {
-                cout << "- ";
+        for (int i = 0; i < size; i++) {
+            if (occupied[i]) {
+                std::cout << table[i] << " ";
             } else {
-                cout << hashTable[i] << " ";
+                std::cout << "- ";
             }
         }
-        cout << endl;
+        std::cout << std::endl;
     }
 };
