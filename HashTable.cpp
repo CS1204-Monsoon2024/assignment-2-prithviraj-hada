@@ -144,12 +144,12 @@ public:
         int i = 0;
         while (occupied[(hashValue + i * i) % size]) {
             if (table[(hashValue + i * i) % size] == key) {
-                std::cout << "Found " << key << " at: " << (hashValue + i * i) % size << std::endl;
+                std::cout << (hashValue + i * i) % size << std::endl;
                 return true;
             }
             i++;
         }
-        std::cout << "Found at: " << (-1) << std::endl;
+        std::cout << (-1) << std::endl;
         return false;
     }
 
